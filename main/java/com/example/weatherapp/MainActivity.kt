@@ -37,10 +37,9 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun WeatherScreen(viewModel: WeatherViewModel) {
-    var cityInput by remember { mutableStateOf("London") } // Default city
+    var cityInput by remember { mutableStateOf("London") }
     val weatherState = viewModel.weatherState.value
 
-    // Fetch weather for default city on initial composition
     LaunchedEffect(Unit) {
         if (weatherState is WeatherUiState.Initial) {
             viewModel.fetchWeather(cityInput)
@@ -73,14 +72,13 @@ fun WeatherScreen(viewModel: WeatherViewModel) {
         Button(
             onClick = { viewModel.fetchWeather(cityInput.trim()) },
             modifier = Modifier.fillMaxWidth(),
-            enabled = weatherState !is WeatherUiState.Loading // Disable button while loading
+            enabled = weatherState !is WeatherUiState.Loading
         ) {
             Text("Get Weather")
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Display weather information based on state
         when (weatherState) {
             is WeatherUiState.Initial -> {
                 Text("Enter a city and press 'Get Weather'.")
@@ -115,7 +113,7 @@ fun WeatherDetails(weatherData: WeatherResponse) {
 
         weatherData.weather.firstOrNull()?.let {
             Text(
-                text = it.main, // e.g., "Clouds"
+                text = it.main,
                 fontSize = 24.sp,
                 modifier = Modifier.padding(bottom = 4.dp)
             )
@@ -124,13 +122,11 @@ fun WeatherDetails(weatherData: WeatherResponse) {
                 fontSize = 16.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            // You could load an icon here using it.icon and a library like Coil
-            // e.g., Image(painter = rememberAsyncImagePainter("https://openweathermap.org/img/wn/${it.icon}@2x.png"), ...)
         }
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "${String.format("%.1f", weatherData.main.temp)}°C", // Format to one decimal place
+            text = "${String.format("%.1f", weatherData.main.temp)}°C",
             fontSize = 48.sp,
             fontWeight = FontWeight.Bold
         )
