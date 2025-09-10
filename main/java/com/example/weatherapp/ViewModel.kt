@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 
-const val API_KEY = "e29767706e74cff86d019f8319e9a0fe"
+const val API_KEY = "API_KEY"
 
 sealed class WeatherUiState {
     object Initial : WeatherUiState()
@@ -44,4 +44,5 @@ class WeatherViewModel : ViewModel() {
             }
         }
     }
+
 }
