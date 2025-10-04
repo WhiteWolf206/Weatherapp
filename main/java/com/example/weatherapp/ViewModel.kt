@@ -1,12 +1,13 @@
 package com.example.weatherapp
 
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-const val API_KEY = "API_KEY"
+const val API_KEY = "e29767706e74cff86d019f8319e9a0fe"
 
 sealed class WeatherUiState {
     object Initial : WeatherUiState()
@@ -17,8 +18,13 @@ sealed class WeatherUiState {
 
 class WeatherViewModel : ViewModel() {
 
-    private val _weatherState = mutableStateOf<WeatherUiState>(WeatherUiState.Initial)
-    val weatherState: State<WeatherUiState> = _weatherState
+    private val _weatherState = MutableStateFlow<WeatherUiState>(WeatherUiState.Initial)
+    val weatherState: StateFlow<WeatherUiState> = _weatherState.asStateFlow()
+
+    fun resetState() {
+        _weatherState.value = WeatherUiState.Initial
+    }
+
 
     fun fetchWeather(city: String) {
         if (city.isBlank()) {
@@ -44,5 +50,4 @@ class WeatherViewModel : ViewModel() {
             }
         }
     }
-
 }

@@ -16,12 +16,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.weatherapp.ui.theme.WeatherAppTheme
+import androidx.compose.runtime.collectAsState
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.Icons
 
 class MainActivity : ComponentActivity() {
     private val weatherViewModel: WeatherViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         setContent {
             WeatherAppTheme {
                 Surface(
@@ -37,8 +45,8 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun WeatherScreen(viewModel: WeatherViewModel) {
-    var cityInput by remember { mutableStateOf("London") }
-    val weatherState = viewModel.weatherState.value
+    var cityInput by remember { mutableStateOf("") }
+    val weatherState by viewModel.weatherState.collectAsState()
 
     LaunchedEffect(Unit) {
         if (weatherState is WeatherUiState.Initial) {
@@ -46,12 +54,50 @@ fun WeatherScreen(viewModel: WeatherViewModel) {
         }
     }
 
+    Scaffold { innerPadding ->
+        Box(
+            modifier = Modifier
+                .padding(innerPadding)
+                .imePadding()
+                .fillMaxSize()
+        ) {
+            when (val state = weatherState) {
+                is WeatherUiState.Success -> {
+                    WeatherDetails(
+                        weatherData = state.data,
+                        onBackClick = { viewModel.resetState() }
+                    )
+                }
+                else -> {
+                    SearchContent(
+                        cityInput = cityInput,
+                        onCityInputChange = { cityInput = it },
+                        onSearchClick = { viewModel.fetchWeather(cityInput.trim()) },
+                        isLoading = state is WeatherUiState.Loading
+                    )
 
+                    if (state is WeatherUiState.Error) {
+                        //don't know later implementation maybe smth funny
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SearchContent(
+    cityInput: String,
+    onCityInputChange: (String) -> Unit,
+    onSearchClick: () -> Unit,
+    isLoading: Boolean
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
         Text(
             text = "Batata",
@@ -61,7 +107,7 @@ fun WeatherScreen(viewModel: WeatherViewModel) {
 
         OutlinedTextField(
             value = cityInput,
-            onValueChange = { cityInput = it },
+            onValueChange = onCityInputChange,
             label = { Text("Enter City Name") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
@@ -70,40 +116,43 @@ fun WeatherScreen(viewModel: WeatherViewModel) {
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
-            onClick = { viewModel.fetchWeather(cityInput.trim()) },
+            onClick = onSearchClick,
             modifier = Modifier.fillMaxWidth(),
-            enabled = weatherState !is WeatherUiState.Loading
+            enabled = !isLoading
         ) {
             Text("Get Weather")
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        when (weatherState) {
-            is WeatherUiState.Initial -> {
-                Text("Enter a city and press 'Get Weather'.")
-            }
-            is WeatherUiState.Loading -> {
-                CircularProgressIndicator()
-                Text("Loading weather...", modifier = Modifier.padding(top = 8.dp))
-            }
-            is WeatherUiState.Success -> {
-                WeatherDetails(weatherData = weatherState.data)
-            }
-            is WeatherUiState.Error -> {
-                Text(
-                    text = "Error: ${weatherState.message}",
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyLarge
-                )
-            }
+        if (isLoading) {
+            Spacer(modifier = Modifier.height(24.dp))
+            CircularProgressIndicator()
+            Text("Loading weather...", modifier = Modifier.padding(top = 8.dp))
         }
     }
 }
 
 @Composable
-fun WeatherDetails(weatherData: WeatherResponse) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+fun WeatherDetails(weatherData: WeatherResponse, onBackClick: () -> Unit) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        IconButton(
+            onClick = onBackClick,
+            modifier = Modifier.align(Alignment.TopStart)
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "back to search"
+            )
+        }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
         Text(
             text = weatherData.cityName,
             style = MaterialTheme.typography.headlineSmall,
@@ -118,7 +167,7 @@ fun WeatherDetails(weatherData: WeatherResponse) {
                 modifier = Modifier.padding(bottom = 4.dp)
             )
             Text(
-                text = "(${it.description})", // e.g., "broken clouds"
+                text = "(${it.description})",
                 fontSize = 16.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -145,4 +194,5 @@ fun WeatherDetails(weatherData: WeatherResponse) {
             fontSize = 16.sp
         )
     }
+}
 }
